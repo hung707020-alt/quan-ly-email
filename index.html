@@ -1,0 +1,26 @@
+<!-- Nút Thêm Email nhỏ gọn -->
+    <button class="btn-blue btn-add-small" onclick="addEmails()">➕ Thêm Email Vào Danh Sách</button>
+    
+    <button class="btn-red" onclick="clearAll()">🗑️ Xóa Danh Sách Email</button>
+
+    <div class="output-group">
+        <input type="text" id="singleOutput" placeholder="Email sẽ xuất hiện ở đây" readonly>
+        <button class="btn-icon-square" onclick="copySingleInput()">📋</button>
+    </div>
+
+    <div class="counter">
+        📊 Số email còn lại: <span id="emailCount">0</span>
+    </div>
+
+    <button class="btn-yellow" onclick="resetLog()">🧹 Clear Log Copy</button>
+    
+    <!-- Nút Lấy & Copy Email chữ to bự nổi bật -->
+    <button class="btn-green btn-get-large" onclick="getNextAndCopy()">📋 Lấy & Copy Email</button>
+</div>
+
+<script>
+    let emailList = [];
+
+    function showToast(message) {
+        const toast = document.getElementById('customToast');
+        toas
