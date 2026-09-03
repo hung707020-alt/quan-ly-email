@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh sách Email Online</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            margin: 0;
+            transition: background-color 0.3s ease;
+        }
+        /* Hiệu ứng nháy đỏ màn hình khi trùng lặp */
+        body.alert-red {
+            background-color: #f8d7da !important;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            transition: all 0.3s ease;
+        }
+        /* Hiệu ứng khung container chuyển màu đỏ khi trùng */
+        .container.alert-container-red {
+            border: 2px solid #dc3545;
+            background-color: #fff5f5;
+        }
+        .header-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a2d82;
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sub-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000000;
+            margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%;
+            height: 45px; /* Ô dán email đã thu gọn nhỏ */
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+            resize: vertical;
+        }
+        textarea::placeholder {
+            color: #9ca3af;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-add-small {
+            font-size: 15px;
+            padding: 12px;
+        }
+        .btn-get-large {
+            font-size: 20px;
+            padding: 18px;
+        }
+        .btn-blue { background-color: #007bff; }
+        .btn-red { background-color: #dc3545; }
+        .btn-yellow { background-color: #ffc107; color: #000000; }
+        .btn-green { background-color: #28a745; }
+
+        .output-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .output-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background-color: #ffffff;
+        }
+        .output-group input::placeholder {
+            color: #9ca3af;
+        }
+        .btn-icon-square {
+            width: 55px;
+            margin-bottom: 0;
+            background-color: #007bff;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        .counter {
+            font-size: 17px;
+            font-weight: bold;
+            color: #000000;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #customToast {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+    <div class="header-title">✉️ Quản lý danh sách Email Online</div>
+    <div class="sub-title">MAIL ĐÁNH</div>
+    
+    <div id="customToast">Đã lưu tự động!</div>
+
+    <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ;, space ...)"></textarea>
+
+    <!-- Nút Thêm Email -->
+    <button class="btn-blue btn-add-small" id="btnAddEmail">
+        <span style="font-size: 20px; margin-right: -2px;">+</span> Thêm Email Vào Danh Sách
+    </button>
+
+    <!-- Nút Xóa Danh Sách Email -->
+    <button class="btn-red" id="btnDeleteAll">
+        <span style="font-size: 20px;">🗑️</span> Xóa Danh Sách Email
+    </button>
+
+    <div class="output-group">
+        <input type="text" id="singleEmailOutput" placeholder="Email sẽ xuất hiện ở đây">
+        <button class="btn-blue btn-icon-square" id="btnCopySingle">📋</button>
+    </div>
+
+    <div class="counter" id="emailCounter">
+        <span>📊</span> Số email còn lại: 0
+    </div>
+
+    <!-- Nút Clear Log Copy -->
+    <button class="btn-yellow" id="btnClearLog">
+        <span style="font-size: 20px; margin-right: 2px;">✏️</span> Clear Log Copy
+    </button>
+
+    <!-- Nút Lấy & Copy Email -->
+    <button class="btn-green btn-get-large" id="btnGetAndCopy">
+        <span style="font-size: 26px; margin-right: 3px;">📋</span> Lấy & Copy Email
+    </button>
+</div>
+
+<script>
+    const textarea = document.getElementById('emailListInput');
+    const singleOutput = document.getElementById('singleEmailOutput');
+    const counter = document.getElementById('emailCounter');
+    const toast = document.getElementById('customToast');
+    const mainContainer = document.getElementById('mainContainer');
+    
+    const btnAddEmail = document.getElementById('btnAddEmail');
+    const btnDeleteAll = document.getElementById('btnDeleteAll');
+    const btnCopySingle = document.getElementById('btnCopySingle');
+    const btnClearLog = document.getElementById('btnClearLog');
+    const btnGetAndCopy = document.getElementById('btnGetAndCopy');
+
+    let mainEmailPool = [];
+
+    // 1. Tải dữ liệu khi mở trang
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedData = localStorage.getItem('saved_email_pool');
+        if (savedData !== null) {
+            try {
+                mainEmailPool = JSON.parse(savedData);
+            } catch (e) {
+                mainEmailPool = [];
+            }
+        }
+        updateCounter();
+    });
+
+    // 2. Nút "Thêm Email Vào Danh Sách" (Tự động xóa sạch ô dán sau khi thêm)
+    btnAddEmail.addEventListener('click', () => {
+        const inputContent = textarea.value.trim();
+        if (!inputContent) {
+            alert("Vui lòng dán danh sách email cần thêm vào ô nhập!");
+            return;
+        }
+
+        let newItems = inputContent.split('\n').map(item => item.trim()).filter(item => item !== '');
+        mainEmailPool = [...new Set([...mainEmailPool, ...newItems])];
+
+        localStorage.setItem('saved_email_pool', JSON.stringify(mainEmailPool));
+        textarea.value = ''; // Xóa sạch ô dán ngay lập tức
+
+        updateCounter();
+        showToast("Đã thêm và lọc trùng thành công!", false);
+    });
+
+    // 3. Nút "Xóa Danh Sách Email"
+    btnDeleteAll.addEventListener('click', () => {
+        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ danh sách không?")) {
+            mainEmailPool = [];
+            textarea.value = '';
+            singleOutput.value = '';
+            localStorage.removeItem('saved_email_pool');
+            localStorage.removeItem('copied_email_history');
+            updateCounter();
+            resetScreenAlert();
+            showToast("Đã xóa sạch danh sách!", false);
+        }
+    });
+
+    // 4. Nút "Lấy & Copy Email" (Báo đỏ màn hình nếu phát hiện email trùng lặp lịch sử)
+    btnGetAndCopy.addEventListener('click', () => {
+        if (mainEmailPool.length === 0) {
+            alert("Danh sách đang trống hoặc chưa được thêm vào!");
+            return;
+        }
+
+        let firstEmail = mainEmailPool[0];
+
+        let copiedHistory = JSON.parse(localStorage.getItem('copied_email_history') || '[]');
+        let isDuplicateInHistory = copiedHistory.includes(firstEmail);
+
+        singleOutput.value = firstEmail;
+
+        mainEmailPool.shift();
+        localStorage.setItem('saved_email_pool', JSON.stringify(mainEmailPool));
+        updateCounter();
+
+        if (!isDuplicateInHistory) {
+            copiedHistory.push(firstEmail);
+            localStorage.setItem('copied_email_history', JSON.stringify(copiedHistory));
+        }
+
+        navigator.clipboard.writeText(firstEmail).then(() => {
+            if (isDuplicateInHistory) {
+                triggerRedAlert(); // Báo đỏ màn hình và khung
+                showToast("⚠️ CẢNH BÁO: Email này đã từng copy trước đó!", true);
+            } else {
+                resetScreenAlert();
+                showToast("Đã lấy và copy thành công!", false);
+            }
+        }).catch(() => {
+            showToast("Đã lấy email thành công!", false);
+        });
+    });
+
+    // 5. Nút copy ở ô vuông cạnh kết quả đơn
+    btnCopySingle.addEventListener('click', () => {
+        if (!singleOutput.value) {
+            alert("Không có email nào để copy!");
+            return;
+        }
+        navigator.clipboard.writeText(singleOutput.value).then(() => {
+            showToast("Đã copy email từ ô kết quả!", false);
+        });
+    });
+
+    // 6. Nút "Clear Log Copy"
+    btnClearLog.addEventListener('click', () => {
+        singleOutput.value = '';
+        localStorage.removeItem('copied_email_history');
+        resetScreenAlert();
+        showToast("Đã xóa sạch Log Copy!", false);
+    });
+
+    // Hàm kích hoạt hiệu ứng báo đỏ màn hình
+    function triggerRedAlert() {
+        document.body.classList.add('alert-red');
+        mainContainer.classList.add('alert-container-red');
+    }
+
+    // Hàm reset lại trạng thái bình thường
+    function resetScreenAlert() {
+        document.body.classList.remove('alert-red');
+        mainContainer.classList.remove('alert-container-red');
+    }
+
+    function updateCounter() {
+        counter.innerHTML = `<span>📊</span> Số email còn lại: ${mainEmailPool.length}`;
+    }
+
+    function showToast(message, isError) {
+        toast.innerText = message;
+        if (isError) {
+            toast.style.background = '#f8d7da';
+            toast.style.color = '#721c24';
+        } else {
+            toast.style.background = '#d4edda';
+            toast.style.color = '#155724';
+        }
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3500);
+    }
+</script>
+
+</body>
+</html>
