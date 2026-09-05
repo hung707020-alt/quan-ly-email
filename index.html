@@ -15,7 +15,6 @@
             margin: 0;
             transition: background-color 0.3s ease;
         }
-        /* Hiệu ứng nháy đỏ màn hình khi trùng lặp */
         body.alert-red {
             background-color: #f8d7da !important;
         }
@@ -32,7 +31,6 @@
             justify-content: flex-start; 
             transition: all 0.3s ease;
         }
-        /* Hiệu ứng khung container chuyển màu đỏ khi trùng */
         .container.alert-container-red {
             border: 2px solid #dc3545;
             background-color: #fff5f5;
@@ -54,7 +52,7 @@
         }
         textarea {
             width: 100%;
-            height: 45px; /* Ô dán email đã thu gọn nhỏ */
+            height: 45px;
             padding: 10px 12px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
@@ -146,7 +144,7 @@
 <div class="container" id="mainContainer">
     <div class="header-title">✉️ Quản lý danh sách Email Online</div>
     <div class="sub-title">MAIL ĐÁNH</div>
-    
+
     <div id="customToast">Đã lưu tự động!</div>
 
     <textarea id="emailListInput" placeholder="Dán email, text rác, phân cách bất kỳ (| ;, space ...)"></textarea>
@@ -187,7 +185,7 @@
     const counter = document.getElementById('emailCounter');
     const toast = document.getElementById('customToast');
     const mainContainer = document.getElementById('mainContainer');
-    
+
     const btnAddEmail = document.getElementById('btnAddEmail');
     const btnDeleteAll = document.getElementById('btnDeleteAll');
     const btnCopySingle = document.getElementById('btnCopySingle');
@@ -209,22 +207,34 @@
         updateCounter();
     });
 
-    // 2. Nút "Thêm Email Vào Danh Sách" (Tự động xóa sạch ô dán sau khi thêm)
+    // 2. Nút "Thêm Email Vào Danh Sách" (CHỈ CHO THÊM CHUỖI CÓ KÝ TỰ @)
     btnAddEmail.addEventListener('click', () => {
         const inputContent = textarea.value.trim();
         if (!inputContent) {
-            alert("Vui lòng dán danh sách email cần thêm vào ô nhập!");
+            alert("Vui lòng dán văn bản cần lọc!");
             return;
         }
 
-        let newItems = inputContent.split('\n').map(item => item.trim()).filter(item => item !== '');
-        mainEmailPool = [...new Set([...mainEmailPool, ...newItems])];
+        // Tách chuỗi theo dấu xuống dòng, khoảng trắng, dấu phẩy, chấm phẩy, gạch đứng
+        let rawItems = inputContent.split(/[\n\s;,|]+/);
+
+        // LỌC CHẶT CHẼ: Chỉ giữ lại những từ CÓ CHỨA ký tự '@'
+        let validEmails = rawItems.filter(item => item.includes('@'));
+
+        if (validEmails.length === 0) {
+            alert("Không tìm thấy từ nào có ký tự '@'!");
+            textarea.value = '';
+            return;
+        }
+
+        // Gộp vào danh sách và loại bỏ trùng lặp
+        mainEmailPool = [...new Set([...mainEmailPool, ...validEmails])];
 
         localStorage.setItem('saved_email_pool', JSON.stringify(mainEmailPool));
-        textarea.value = ''; // Xóa sạch ô dán ngay lập tức
+        textarea.value = ''; 
 
         updateCounter();
-        showToast("Đã thêm và lọc trùng thành công!", false);
+        showToast(`Đã thêm ${validEmails.length} mục có ký tự @!`, false);
     });
 
     // 3. Nút "Xóa Danh Sách Email"
@@ -241,7 +251,7 @@
         }
     });
 
-    // 4. Nút "Lấy & Copy Email" (Báo đỏ màn hình nếu phát hiện email trùng lặp lịch sử)
+    // 4. Nút "Lấy & Copy Email"
     btnGetAndCopy.addEventListener('click', () => {
         if (mainEmailPool.length === 0) {
             alert("Danh sách đang trống hoặc chưa được thêm vào!");
@@ -266,7 +276,7 @@
 
         navigator.clipboard.writeText(firstEmail).then(() => {
             if (isDuplicateInHistory) {
-                triggerRedAlert(); // Báo đỏ màn hình và khung
+                triggerRedAlert();
                 showToast("⚠️ CẢNH BÁO: Email này đã từng copy trước đó!", true);
             } else {
                 resetScreenAlert();
@@ -277,7 +287,7 @@
         });
     });
 
-    // 5. Nút copy ở ô vuông cạnh kết quả đơn
+    // 5. Nút copy ô đơn
     btnCopySingle.addEventListener('click', () => {
         if (!singleOutput.value) {
             alert("Không có email nào để copy!");
@@ -296,13 +306,11 @@
         showToast("Đã xóa sạch Log Copy!", false);
     });
 
-    // Hàm kích hoạt hiệu ứng báo đỏ màn hình
     function triggerRedAlert() {
         document.body.classList.add('alert-red');
         mainContainer.classList.add('alert-container-red');
     }
 
-    // Hàm reset lại trạng thái bình thường
     function resetScreenAlert() {
         document.body.classList.remove('alert-red');
         mainContainer.classList.remove('alert-container-red');
